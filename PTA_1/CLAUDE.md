@@ -75,6 +75,13 @@ The application includes a comprehensive user management system with the followi
 - Real-time signup counts and availability
 - Search and filter activities
 
+#### Home Page Features
+- **Activity Dashboard**: Front page displays upcoming activities with registration buttons
+- **Quick Registration**: Direct signup from home page with person selection
+- **Live Statistics**: Real-time display of total activities, participants, and volunteers
+- **Quick Access Cards**: Direct links to manage Students, Parents, and Teachers
+- **No Activity State**: Helpful messaging and links when no activities exist
+
 ## Notes
 - Database uses SQLite (app.db) for development environment
 - First build may require package restore (can take 2+ minutes)

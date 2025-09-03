@@ -1,8 +1,186 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model IEnumerable<Web.Models.Activity>
+@using Web.Models
+
+@{
+    ViewData["Title"] = "PTA Activities & Registration";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Success/Error Messages -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Header Section -->
+<div class="text-center mb-5">
+    <h1 class="display-4">PTA Activities</h1>
+    <p class="lead">Discover upcoming events and sign up to participate or volunteer!</p>
+    <div class="mt-3">
+        <a asp-controller="Activity" asp-action="Index" class="btn btn-primary me-2">View All Activities</a>
+        <a asp-controller="Activity" asp-action="Create" class="btn btn-outline-primary">Create New Activity</a>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3>@Model.Count()</h3>
+                <p class="mb-0">Upcoming Activities</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3>@Model.Sum(a => a.ActivitySignups.Count(s => s.ParticipationType == ParticipationType.Participant))</h3>
+                <p class="mb-0">Total Participants</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3>@Model.Sum(a => a.ActivitySignups.Count(s => s.ParticipationType == ParticipationType.Volunteer))</h3>
+                <p class="mb-0">Total Volunteers</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activities List -->
+@if (Model.Any())
+{
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Upcoming Activities</h2>
+        </div>
+        
+        @foreach (var activity in Model)
+        {
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title">@activity.Title</h5>
+                            <span class="badge bg-info">@activity.StartDate.ToString("MMM dd")</span>
+                        </div>
+                        
+                        <h6 class="card-subtitle mb-2 text-muted">@activity.DateDisplay</h6>
+                        
+                        @if (!string.IsNullOrEmpty(activity.Location))
+                        {
+                            <p class="card-text text-muted mb-2">
+                                <i class="fas fa-map-marker-alt me-1"></i>@activity.Location
+                            </p>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(activity.Description))
+                        {
+                            <p class="card-text">@activity.Description</p>
+                        }
+                        
+                        <!-- Capacity Info -->
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Participants</small>
+                                <div>
+                                    @{
+                                        var participantCount = activity.ActivitySignups.Count(s => s.ParticipationType == ParticipationType.Participant);
+                                        var participantLimit = activity.MaxParticipants;
+                                    }
+                                    <strong>@participantCount/@(participantLimit == 0 ? "∞" : participantLimit.ToString())</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Volunteers</small>
+                                <div>
+                                    @{
+                                        var volunteerCount = activity.ActivitySignups.Count(s => s.ParticipationType == ParticipationType.Volunteer);
+                                        var volunteerLimit = activity.MaxVolunteers;
+                                    }
+                                    <strong>@volunteerCount/@(volunteerLimit == 0 ? "∞" : volunteerLimit.ToString())</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="d-grid gap-2">
+                            <div class="btn-group" role="group">
+                                <form asp-action="QuickSignup" method="post" class="d-inline">
+                                    <input type="hidden" name="activityId" value="@activity.Id" />
+                                    <input type="hidden" name="participationType" value="@ParticipationType.Participant" />
+                                    <button type="submit" class="btn btn-success btn-sm">Sign Up as Participant</button>
+                                </form>
+                                <form asp-action="QuickSignup" method="post" class="d-inline">
+                                    <input type="hidden" name="activityId" value="@activity.Id" />
+                                    <input type="hidden" name="participationType" value="@ParticipationType.Volunteer" />
+                                    <button type="submit" class="btn btn-warning btn-sm">Sign Up as Volunteer</button>
+                                </form>
+                            </div>
+                            <a asp-controller="Activity" asp-action="Details" asp-route-id="@activity.Id" class="btn btn-outline-primary btn-sm">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <div class="mb-3">
+            <i class="fas fa-calendar-times fa-4x text-muted"></i>
+        </div>
+        <h3 class="text-muted">No Upcoming Activities</h3>
+        <p class="text-muted">There are currently no activities scheduled. Check back soon or create a new activity!</p>
+        <a asp-controller="Activity" asp-action="Create" class="btn btn-primary">Create First Activity</a>
+    </div>
+}
+
+<!-- Quick Access Section -->
+<div class="row mt-5 pt-4 border-top">
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-user-graduate fa-2x text-primary mb-2"></i>
+                <h5>Students</h5>
+                <p class="text-muted">Register new students or view existing ones</p>
+                <a asp-controller="Student" asp-action="Index" class="btn btn-outline-primary">Manage Students</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x text-success mb-2"></i>
+                <h5>Parents</h5>
+                <p class="text-muted">Register new parents or view existing ones</p>
+                <a asp-controller="Parent" asp-action="Index" class="btn btn-outline-success">Manage Parents</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-chalkboard-teacher fa-2x text-warning mb-2"></i>
+                <h5>Teachers</h5>
+                <p class="text-muted">Register new teachers or view existing ones</p>
+                <a asp-controller="Teacher" asp-action="Index" class="btn btn-outline-warning">Manage Teachers</a>
+            </div>
+        </div>
+    </div>
 </div>

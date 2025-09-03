@@ -1,0 +1,167 @@
+@model IEnumerable<Web.Models.Person>
+@using Web.Models
+
+@{
+    ViewData["Title"] = "Select Person to Register";
+    var activity = ViewBag.Activity as Web.Models.Activity;
+    var participationType = (ParticipationType)ViewBag.ParticipationType;
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <h2>Sign Up as @participationType.ToString() for: @activity.Title</h2>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Activity Details</h5>
+                <dl class="row">
+                    <dt class="col-sm-3">Date:</dt>
+                    <dd class="col-sm-9">@activity.DateDisplay</dd>
+                    
+                    @if (!string.IsNullOrEmpty(activity.Location))
+                    {
+                        <dt class="col-sm-3">Location:</dt>
+                        <dd class="col-sm-9">@activity.Location</dd>
+                    }
+                    
+                    <dt class="col-sm-3">Role:</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge bg-@(participationType == ParticipationType.Participant ? "success" : "warning")">
+                            @participationType.ToString()
+                        </span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Select Person to Sign Up</h5>
+                
+                @if (Model.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var person in Model)
+                                {
+                                    <tr>
+                                        <td>@person.FirstName @person.LastName</td>
+                                        <td>
+                                            @if (person.Student != null)
+                                            {
+                                                <span class="badge bg-info">Student - @person.Student.Grade</span>
+                                            }
+                                            @if (person.Parent != null)
+                                            {
+                                                <span class="badge bg-success">Parent</span>
+                                            }
+                                            @if (person.Teacher != null)
+                                            {
+                                                <span class="badge bg-warning">Teacher</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#signupModal" 
+                                                    onclick="setupSignupModal(@person.Id, '@person.FirstName @person.LastName', @activity.Id, '@participationType')">
+                                                Register
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <h5>No People Registered</h5>
+                        <p>You need to register some people first before they can sign up for activities.</p>
+                        <div class="mt-3">
+                            <a asp-controller="Student" asp-action="Create" class="btn btn-primary me-2">Register Student</a>
+                            <a asp-controller="Parent" asp-action="Create" class="btn btn-success me-2">Register Parent</a>
+                            <a asp-controller="Teacher" asp-action="Create" class="btn btn-warning">Register Teacher</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Quick Actions</h5>
+                <a asp-action="Index" class="btn btn-outline-secondary d-block mb-2">Back to Home</a>
+                <a asp-controller="Activity" asp-action="Details" asp-route-id="@activity.Id" class="btn btn-outline-primary d-block">View Activity Details</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Signup Confirmation Modal -->
+<div class="modal fade" id="signupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="ProcessQuickSignup" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Registration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="activityId" id="modal-activityId" />
+                    <input type="hidden" name="personId" id="modal-personId" />
+                    <input type="hidden" name="participationType" id="modal-participationType" />
+                    
+                    <div class="alert alert-info">
+                        <strong>Person:</strong> <span id="modal-personName"></span><br>
+                        <strong>Activity:</strong> @activity.Title<br>
+                        <strong>Role:</strong> <span id="modal-roleType"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea name="notes" id="notes" class="form-control" rows="2" placeholder="Any special notes or requirements..."></textarea>
+                    </div>
+
+                    @if (participationType == ParticipationType.Participant)
+                    {
+                        <div class="mb-3">
+                            <label for="emergencyContact" class="form-label">Emergency Contact</label>
+                            <input type="text" name="emergencyContact" id="emergencyContact" class="form-control" placeholder="Emergency contact name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="emergencyPhone" class="form-label">Emergency Phone</label>
+                            <input type="tel" name="emergencyPhone" id="emergencyPhone" class="form-control" placeholder="Emergency contact phone">
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Confirm Registration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function setupSignupModal(personId, personName, activityId, participationType) {
+            document.getElementById('modal-personId').value = personId;
+            document.getElementById('modal-activityId').value = activityId;
+            document.getElementById('modal-participationType').value = participationType;
+            document.getElementById('modal-personName').textContent = personName;
+            document.getElementById('modal-roleType').textContent = participationType;
+        }
+    </script>
+}
