@@ -1,0 +1,210 @@
+@model Web.Models.Activity
+@using Web.Models
+
+@{
+    ViewData["Title"] = "Activity Details";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>@Model.Title</h2>
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Edit</a>
+        <a asp-action="Index" class="btn btn-secondary">Back to Activities</a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Activity Information</h5>
+                <dl class="row">
+                    <dt class="col-sm-3">Date:</dt>
+                    <dd class="col-sm-9">@Model.DateDisplay</dd>
+
+                    @if (!string.IsNullOrEmpty(Model.Location))
+                    {
+                        <dt class="col-sm-3">Location:</dt>
+                        <dd class="col-sm-9">@Model.Location</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <dt class="col-sm-3">Description:</dt>
+                        <dd class="col-sm-9">@Model.Description</dd>
+                    }
+
+                    <dt class="col-sm-3">Capacity:</dt>
+                    <dd class="col-sm-9">
+                        Participants: @(Model.MaxParticipants == 0 ? "Unlimited" : Model.MaxParticipants.ToString())
+                        | Volunteers: @(Model.MaxVolunteers == 0 ? "Unlimited" : Model.MaxVolunteers.ToString())
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Sign Up Section -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Sign Up</h5>
+                <div class="d-grid gap-2 d-md-block">
+                    <a asp-action="Signup" asp-route-id="@Model.Id" asp-route-participationType="@ParticipationType.Participant" class="btn btn-success">Sign Up as Participant</a>
+                    <a asp-action="Signup" asp-route-id="@Model.Id" asp-route-participationType="@ParticipationType.Volunteer" class="btn btn-warning">Sign Up as Volunteer</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Section -->
+        @if (Model.Tasks.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Volunteer Tasks</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Time</th>
+                                    <th>Location</th>
+                                    <th>Volunteers</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var task in Model.Tasks.OrderBy(t => t.SortOrder))
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@task.Title</strong>
+                                            @if (task.IsRequired)
+                                            {
+                                                <span class="badge bg-danger ms-1">Required</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(task.Description))
+                                            {
+                                                <br><small class="text-muted">@task.Description</small>
+                                            }
+                                        </td>
+                                        <td>@task.TimeDisplay</td>
+                                        <td>@(task.Location ?? "TBD")</td>
+                                        <td>
+                                            @task.CurrentVolunteerCount/@(task.MaxVolunteers == 0 ? "∞" : task.MaxVolunteers.ToString())
+                                            @if (task.IsFull)
+                                            {
+                                                <span class="badge bg-secondary">Full</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" disabled>Sign Up</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Stations Section -->
+        @if (Model.Stations.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Activity Stations</h5>
+                    <div class="row">
+                        @foreach (var station in Model.Stations.OrderBy(s => s.SortOrder))
+                        {
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">@station.Title</h6>
+                                        @if (!string.IsNullOrEmpty(station.Description))
+                                        {
+                                            <p class="card-text">@station.Description</p>
+                                        }
+                                        <small class="text-muted">
+                                            Time: @station.TimeDisplay<br>
+                                            Age: @station.AgeRangeDisplay<br>
+                                            Capacity: @station.CurrentParticipantCount/@(station.MaxParticipants == 0 ? "∞" : station.MaxParticipants.ToString())
+                                        </small>
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-success" disabled>Sign Up</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Current Signups</h5>
+                
+                @{
+                    var participants = Model.ActivitySignups.Where(s => s.ParticipationType == ParticipationType.Participant).ToList();
+                    var volunteers = Model.ActivitySignups.Where(s => s.ParticipationType == ParticipationType.Volunteer).ToList();
+                }
+
+                <h6 class="mt-3">Participants (@participants.Count)</h6>
+                @if (participants.Any())
+                {
+                    <ul class="list-unstyled">
+                        @foreach (var signup in participants)
+                        {
+                            <li class="mb-1">
+                                <small>@signup.Person.FirstName @signup.Person.LastName</small>
+                                <span class="badge bg-@(signup.Status == SignupStatus.Confirmed ? "success" : "secondary") ms-1">@signup.Status</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted">No participants signed up yet.</p>
+                }
+
+                <h6 class="mt-3">Volunteers (@volunteers.Count)</h6>
+                @if (volunteers.Any())
+                {
+                    <ul class="list-unstyled">
+                        @foreach (var signup in volunteers)
+                        {
+                            <li class="mb-1">
+                                <small>@signup.Person.FirstName @signup.Person.LastName</small>
+                                <span class="badge bg-@(signup.Status == SignupStatus.Confirmed ? "success" : "secondary") ms-1">@signup.Status</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted">No volunteers signed up yet.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

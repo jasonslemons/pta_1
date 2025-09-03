@@ -1,0 +1,77 @@
+@model IEnumerable<Web.Models.Activity>
+
+@{
+    ViewData["Title"] = "Activities";
+}
+
+<h2>Activities</h2>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <a asp-action="Create" class="btn btn-primary">Create New Activity</a>
+    </div>
+    <div class="col-md-6">
+        <form asp-action="Search" method="get" class="d-flex">
+            <input type="text" name="searchTerm" class="form-control me-2" placeholder="Search activities..." value="@ViewBag.SearchTerm">
+            <button type="submit" class="btn btn-outline-secondary">Search</button>
+        </form>
+    </div>
+</div>
+
+@if (ViewBag.SearchTerm != null)
+{
+    <div class="alert alert-info">
+        Search results for "@ViewBag.SearchTerm" - <a asp-action="Index">Show all activities</a>
+    </div>
+}
+
+<div class="row">
+    @foreach (var activity in Model)
+    {
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">@activity.Title</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">@activity.DateDisplay</h6>
+                    @if (!string.IsNullOrEmpty(activity.Description))
+                    {
+                        <p class="card-text">@activity.Description</p>
+                    }
+                    @if (!string.IsNullOrEmpty(activity.Location))
+                    {
+                        <p class="card-text"><small class="text-muted"><i class="fas fa-map-marker-alt"></i> @activity.Location</small></p>
+                    }
+                    <div class="mb-2">
+                        @if (activity.MaxParticipants > 0)
+                        {
+                            <span class="badge bg-info">Max Participants: @activity.MaxParticipants</span>
+                        }
+                        @if (activity.MaxVolunteers > 0)
+                        {
+                            <span class="badge bg-success">Max Volunteers: @activity.MaxVolunteers</span>
+                        }
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group w-100" role="group">
+                        <a asp-action="Details" asp-route-id="@activity.Id" class="btn btn-outline-primary btn-sm">Details</a>
+                        <a asp-action="Edit" asp-route-id="@activity.Id" class="btn btn-outline-secondary btn-sm">Edit</a>
+                    </div>
+                    <div class="btn-group w-100 mt-2" role="group">
+                        <a asp-action="Signup" asp-route-id="@activity.Id" asp-route-participationType="@ParticipationType.Participant" class="btn btn-success btn-sm">Sign Up as Participant</a>
+                        <a asp-action="Signup" asp-route-id="@activity.Id" asp-route-participationType="@ParticipationType.Volunteer" class="btn btn-warning btn-sm">Sign Up as Volunteer</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">
+        No activities found.
+    </div>
+}
+
+@using Web.Models
