@@ -1,0 +1,61 @@
+@model IEnumerable<Web.Models.Parent>
+
+@{
+    ViewData["Title"] = "Parents";
+}
+
+<h2>Parents</h2>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <a asp-action="Create" class="btn btn-primary">Register New Parent</a>
+    </div>
+    <div class="col-md-6">
+        <form asp-action="Search" method="get" class="d-flex">
+            <input type="text" name="searchTerm" class="form-control me-2" placeholder="Search parents..." value="@ViewBag.SearchTerm">
+            <button type="submit" class="btn btn-outline-secondary">Search</button>
+        </form>
+    </div>
+</div>
+
+@if (ViewBag.SearchTerm != null)
+{
+    <div class="alert alert-info">
+        Search results for "@ViewBag.SearchTerm" - <a asp-action="Index">Show all parents</a>
+    </div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Phone Number</th>
+            <th>Occupation</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var parent in Model)
+        {
+            <tr>
+                <td>@parent.Person.FirstName</td>
+                <td>@parent.Person.LastName</td>
+                <td>@(parent.Email ?? "Not specified")</td>
+                <td>@(parent.PhoneNumber ?? "Not specified")</td>
+                <td>@(parent.Occupation ?? "Not specified")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@parent.Id" class="btn btn-sm btn-info">Details</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">
+        No parents found.
+    </div>
+}

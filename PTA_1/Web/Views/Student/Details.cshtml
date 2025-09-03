@@ -1,0 +1,75 @@
+@model Web.Models.Student
+
+@{
+    ViewData["Title"] = "Student Details";
+}
+
+<h2>Student Details</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <h4>Personal Information</h4>
+        <dl class="row">
+            <dt class="col-sm-4">Name:</dt>
+            <dd class="col-sm-8">@Model.Person.FirstName @Model.Person.MiddleName @Model.Person.LastName @Model.Person.Suffix</dd>
+
+            <dt class="col-sm-4">Birthday:</dt>
+            <dd class="col-sm-8">@(Model.Person.Birthday?.ToString("MM/dd/yyyy") ?? "Not specified")</dd>
+
+            <dt class="col-sm-4">SSN:</dt>
+            <dd class="col-sm-8">@(Model.Person.SSN ?? "Not specified")</dd>
+        </dl>
+    </div>
+
+    <div class="col-md-6">
+        <h4>Student Information</h4>
+        <dl class="row">
+            <dt class="col-sm-4">Student ID:</dt>
+            <dd class="col-sm-8">@(Model.StudentId ?? "Not assigned")</dd>
+
+            <dt class="col-sm-4">Grade:</dt>
+            <dd class="col-sm-8">@Model.Grade</dd>
+
+            <dt class="col-sm-4">Enrollment Date:</dt>
+            <dd class="col-sm-8">@Model.EnrollmentDate.ToString("MM/dd/yyyy")</dd>
+        </dl>
+    </div>
+</div>
+
+@if (Model.ParentStudents.Any())
+{
+    <div class="row mt-4">
+        <div class="col-12">
+            <h4>Parents/Guardians</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Relationship</th>
+                        <th>Primary Contact</th>
+                        <th>Pickup Authorization</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ps in Model.ParentStudents)
+                    {
+                        <tr>
+                            <td>@ps.Parent.Person.FirstName @ps.Parent.Person.LastName</td>
+                            <td>@ps.RelationshipType</td>
+                            <td>@(ps.IsPrimaryContact ? "Yes" : "No")</td>
+                            <td>@(ps.HasPickupAuthorization ? "Yes" : "No")</td>
+                            <td>@(ps.Parent.Email ?? "Not specified")</td>
+                            <td>@(ps.Parent.PhoneNumber ?? "Not specified")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="mt-4">
+    <a asp-action="Index" class="btn btn-secondary">Back to Students</a>
+</div>
